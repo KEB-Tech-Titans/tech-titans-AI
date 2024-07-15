@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ultralytics import YOLO
 
-model_box = YOLO('ai_model\model_box.pt')
-model_segment = YOLO('ai_model\segement_model_ephocs_30.pt')
+model_box = YOLO('model_box.pt')
+model_segment = YOLO('segement_model_ephocs_30.pt')
 
 # 이미지 리사이징을 위함
 # 추후 최적의 리사이징 크기 찾을시 변경 가능
@@ -33,6 +33,8 @@ def predict_image_segment(image_path):
 
     # pred_result -> json형식으로 변환후 spring 서버로 보낼 예정
     print(f'Predict result : {pred_result}')
+    
+    return created_img, pred_result
 
 # 이미지 리사이징 코드
 def image_resize(size, img):

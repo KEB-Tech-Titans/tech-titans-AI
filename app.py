@@ -33,10 +33,11 @@ from http import HTTPStatus
 import segment_model
 from io import BytesIO
 import numpy as np
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = 'env/uploads'
+UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -46,6 +47,8 @@ def analyze():
     print('받음')
 
     file = request.files['imageFile']
+
+    print(file.content_length)
 
     if file.filename == '':
             return jsonify({"error": "There is no file"}), 400
@@ -70,12 +73,38 @@ def analyze():
 
 
     # 미리 만들어진 모델에 이미지 넣어서 분석
-    result = segment_model.predict_image_segment(filepath)
+    img, results = segment_model.predict_image_segment(filepath)
 
-    # 디버그
-    print(result)
+    dto_result = {}
+
+    # 나중에 분석 이미지 파일 같이 보내기
+    # dto_result['image'] = convert_to_serializable(img)
+    dto_result['inspections'] = []
+
+    for result in results:
+        temp_dict = {}
+
+        # numpy 타입 일반 타입으로 변환
+        temp_dict['class'] = convert_to_serializable(result['class'])
+        temp_dict['conf'] = convert_to_serializable(result['conf'])
+        temp_dict['area'] = convert_to_serializable(result['area'])
+
+        dto_result['inspections'].append(temp_dict)
+
+    print(dto_result)
+
+    response = jsonify(dto_result)
 
     return response
+
+def convert_to_serializable(obj):
+    if isinstance(obj, np.generic):
+        return obj.item()
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    
+    return obj
+
 # 여기에 모델 삽입해서 결함 종류 / 결함 범위 JSON으로 전달해주기
 """ 
     if file:

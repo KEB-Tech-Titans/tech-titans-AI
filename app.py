@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import math
 
 # 패키지를 설치하는 함수
 def install(package):
@@ -90,8 +91,28 @@ def analyze():
         temp_dict['area'] = convert_to_serializable(result['area'])
 
         dto_result['inspections'].append(temp_dict)
-
+    
     print(dto_result)
+
+    smartphone_area = [ dic['area'] for dic in dto_result['inspections'] if dic['class'] == 'smartphone'][0]
+    defect_area = {}
+    defect_area['stain'] = sum([ dic['area'] for dic in dto_result['inspections'] if dic['class'] == 'stain' ])
+
+    DLI = {}
+    DLI['stain'] = math.log(defect_area['stain'] / smartphone_area, 1.1) if defect_area['stain'] != 0 else "clear"
+    print(DLI['stain'])
+
+    """
+    for dic in dto_result['inspections']:
+        if dic['class'] == 'smartphone':
+            continue
+
+        defect_area = dic['area']
+        defect_rate = defect_area / smartphone_area
+
+        DLI = math.log10(defect_rate)
+        print(defect_rate * 100, DLI)
+    """
 
     response = jsonify(dto_result)
 

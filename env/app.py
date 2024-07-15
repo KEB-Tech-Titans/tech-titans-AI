@@ -3,13 +3,16 @@ from werkzeug.utils import secure_filename
 import os
 import cv2
 import json 
-from werkzeug.utils import secure_filename
 from socket import *
 from http import HTTPStatus
 
+import segment_model
+from io import BytesIO
+import numpy as np
+
 app = Flask(__name__)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'env/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -34,8 +37,21 @@ def analyze():
     file.save(filepath)
     print(f"파일이 저장된 경로: {filepath}")
 
-    return response
+    # 저장된 파일의 존재 여부와 크기 확인
+    if not os.path.exists(filepath):
+        return jsonify({"error": "File not found after saving"}), 400
 
+    if os.path.getsize(filepath) == 0:
+        return jsonify({"error": "Saved file is empty"}), 400
+
+
+    # 미리 만들어진 모델에 이미지 넣어서 분석
+    result = segment_model.predict_image_segment(filepath)
+
+    # 디버그
+    print(result)
+
+    return response
 # 여기에 모델 삽입해서 결함 종류 / 결함 범위 JSON으로 전달해주기
 """ 
     if file:
@@ -58,6 +74,16 @@ def analyze_image(image):
     ]
     return {"defects": defects}
 """
+# 바이너리 파일 이미지 변화 함수
+def binary_to_image(binary_data):
+    image_stream = BytesIO(binary_data)
+
+    image_array = np.frombuffer(image_stream.read(), dp = np.uint8)
+
+    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+
+    return image
+
 
 # 서버 가동 확인용 경로
 @app.route('/')

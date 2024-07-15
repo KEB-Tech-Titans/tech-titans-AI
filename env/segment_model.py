@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ultralytics import YOLO
 
-model_box = YOLO('ai_server\model_box.pt')
-model_segment = YOLO('ai_server\segement_model_ephocs_30.pt')
+model_box = YOLO('ai_model\model_box.pt')
+model_segment = YOLO('ai_model\segement_model_ephocs_30.pt')
 
 # 이미지 리사이징을 위함
 # 추후 최적의 리사이징 크기 찾을시 변경 가능

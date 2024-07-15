@@ -1,3 +1,27 @@
+import subprocess
+import sys
+
+# 패키지를 설치하는 함수
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# 필요한 패키지 목록
+required_packages = [
+    "flask",
+    "werkzeug",
+    "opencv-python",
+    "numpy",
+    "matplotlib",
+    "ultralytics"
+]
+
+# 패키지 설치
+for package in required_packages:
+    try:
+        __import__(package)
+    except ImportError:
+        install(package)
+
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 import os

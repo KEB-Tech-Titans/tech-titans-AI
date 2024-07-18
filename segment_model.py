@@ -25,11 +25,11 @@ def predict_image_segment(image_path):
 
     # 이미지 시각화
     # debug code -> 추후 삭제
-    # plt.figure(figsize=(10, 10))
-    # plt.imshow(created_img)
-    # plt.axis('off')
-    # plt.title('YOLOv8 Segmentation')
-    # plt.show()
+    plt.figure(figsize=(10, 10))
+    plt.imshow(created_img)
+    plt.axis('off')
+    plt.title('YOLOv8 Segmentation')
+    plt.show()
 
     # pred_result -> json형식으로 변환후 spring 서버로 보낼 예정
     print(f'Predict result : {pred_result}')
@@ -149,4 +149,4 @@ def create_bounding_box(results, img):
 
 # 임시 테스트용
 # predict_image_box('Scr_0008.png')
-# predict_image_segment('Scr_0008.png')
+predict_image_segment('Scr_0008.png')

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QTimer, QUrl
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QFont, QFontDatabase
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 import sys
 import cv2
@@ -13,7 +13,7 @@ class VideoCaptureWidget(QWidget):
         self.photo_label = photo_label
 
         # 웹캠 초기화
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
 
         # 타이머 설정 (30ms 간격으로 업데이트)
         self.timer = QTimer(self)
@@ -32,6 +32,7 @@ class VideoCaptureWidget(QWidget):
 
         # 포커스 정책 설정
         self.setFocusPolicy(Qt.StrongFocus)
+        self.current_frame = None  # 현재 프레임 초기화
 
     def update_frame(self):
         # 웹캠에서 프레임 읽기 및 QLabel 업데이트
@@ -102,8 +103,8 @@ class MainPage(QWidget):
         bottom_layout = QHBoxLayout()
 
         # 종료 버튼
-        self.exit_button = QPushButton('종료 버튼', self)
-        self.exit_button.setStyleSheet("background-color: red; font-size: 14px; color: white;")
+        self.exit_button = QPushButton('프로그램 종료', self)
+        self.exit_button.setStyleSheet("background-color: gray; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
         self.exit_button.setFixedSize(200, 70)
         self.exit_button.clicked.connect(parent.close_application)
         bottom_layout.addWidget(self.exit_button)
@@ -112,14 +113,14 @@ class MainPage(QWidget):
 
         # 상태 관리 버튼
         self.status_button = QPushButton('상태 관리', self)
-        self.status_button.setStyleSheet("background-color: green; font-size: 16px; color: white;")
+        self.status_button.setStyleSheet("background-color: green; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
         self.status_button.setFixedSize(200, 70)
         self.status_button.clicked.connect(parent.show_status)
         bottom_layout.addWidget(self.status_button)
 
         # 긴급 버튼
         self.stop_button = QPushButton('긴급 버튼', self)
-        self.stop_button.setStyleSheet("background-color: red; font-size: 16px; color: white;")
+        self.stop_button.setStyleSheet("background-color: red; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
         self.stop_button.setFixedSize(200, 70)
         self.stop_button.clicked.connect(parent.emergency_stop)
         bottom_layout.addWidget(self.stop_button)
@@ -131,6 +132,10 @@ class MainPage(QWidget):
         # 비디오 캡처 위젯의 리소스 해제
         self.video_widget.closeEvent(event)
 
+    def focus_video_widget(self):
+        # 비디오 위젯에 포커스 설정
+        self.video_widget.setFocus()
+
 # 통계 화면 구성
 class StatusPage(QWidget):
     def __init__(self, parent=None):
@@ -139,25 +144,31 @@ class StatusPage(QWidget):
 
         # 상태 관리 페이지 제목
         title = QLabel('12시간 이내 상태 관리 데이터', self)
-        title.setStyleSheet("font-size: 24px; color: white;")
-        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("font-size: 32px; color: white; font-weight:bold;")
+        title.setFixedHeight(70)
+        title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(title)
 
+        # 통계 레이아웃 설정
+        stats_widget = QWidget(self)
         stats_layout = QGridLayout()
-
+        stats_widget.setStyleSheet(
+            "background-color: white;"
+        )
+        stats_widget.setLayout(stats_layout)
         # 통계 레이블 추가
         self.create_stat_label(stats_layout, '불량률', '3%', 0, 0)
         self.create_stat_label(stats_layout, '불량 발생 건수', '10건', 0, 1)
-        self.create_stat_label(stats_layout, '결함 비율', 'Oil : 25%\nStain : 25%\nScratch : 25%\nBlack Spot : 25%', 2, 0, 1, 2)
+        self.create_stat_label(stats_layout, '결함 비율', 'Oil : 25%\tStain : 25%\nScratch : 25%\tBlack Spot : 25%', 2, 0)
         self.create_stat_label(stats_layout, '생산량', '1234개', 2, 1)
-        layout.addLayout(stats_layout)
+        layout.addWidget(stats_widget)
 
         bottom_layout = QHBoxLayout()
 
         # 프로그램 종료 버튼
         self.exit_button = QPushButton('프로그램 종료', self)
-        self.exit_button.setStyleSheet("background-color: gray; font-size: 14px; color: white;")
-        self.exit_button.setFixedSize(200, 50)
+        self.exit_button.setStyleSheet("background-color: gray; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
+        self.exit_button.setFixedSize(200, 70)
         self.exit_button.clicked.connect(parent.close_application)
         bottom_layout.addWidget(self.exit_button)
 
@@ -165,15 +176,15 @@ class StatusPage(QWidget):
 
         # 돌아가기 버튼
         self.back_button = QPushButton('돌아가기', self)
-        self.back_button.setStyleSheet("background-color: green; font-size: 16px; color: white;")
-        self.back_button.setFixedSize(200, 50)
+        self.back_button.setStyleSheet("background-color: green; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
+        self.back_button.setFixedSize(200, 70)
         self.back_button.clicked.connect(parent.go_back)
         bottom_layout.addWidget(self.back_button)
 
         # 긴급 버튼
         self.emergency_button = QPushButton('긴급 버튼', self)
-        self.emergency_button.setStyleSheet("background-color: red; font-size: 16px; color: white;")
-        self.emergency_button.setFixedSize(200, 50)
+        self.emergency_button.setStyleSheet("background-color: red; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
+        self.emergency_button.setFixedSize(200, 70)
         bottom_layout.addWidget(self.emergency_button)
 
         layout.addLayout(bottom_layout)
@@ -182,21 +193,22 @@ class StatusPage(QWidget):
     def create_stat_label(self, layout, label_text, value_text, row, col, rowspan=1, colspan=1):
         # 통계 레이블과 값을 생성하여 레이아웃에 추가
         label = QLabel(label_text, self)
-        label.setStyleSheet("font-size: 18px; color: white;")
-        label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet("font-size: 36px; color: black; font-weight: bold; padding-top : 15px")
+        label.setFixedHeight(70)
+        label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(label, row, col, 1, colspan)
 
         value = QLabel(value_text, self)
         value.setStyleSheet(
-            "font-size: 24px; color: white; border: 1px solid white;" 
+            "font-size: 40px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;" 
             if label_text != '결함 비율' 
-            else "font-size: 16px; color: white; border: 1px solid white;"
+            else "font-size: 36px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;"
         )
         value.setAlignment(
-                Qt.AlignCenter 
-                if label_text != '결함 비율' 
-                else Qt.AlignLeft | Qt.AlignTop
-            )
+            Qt.AlignCenter
+            if label_text != '결함 비율'
+            else Qt.AlignCenter | Qt.AlignLeft
+        )
         layout.addWidget(value, row + 1, col, rowspan, colspan)
 
         # 각 통계 항목에 대한 레퍼런스를 저장
@@ -209,6 +221,7 @@ class StatusPage(QWidget):
         elif label_text == '생산량':
             self.production_value = value
 
+    # 추후 DB연결 시 바뀔 예정 있음
     def update_status_page(self, data):
         # 서버에서 받은 데이터로 상태 페이지 업데이트
         self.defect_rate_value.setText(data["defect_rate"])
@@ -235,20 +248,28 @@ class MyApp(QWidget):
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
 
-        self.network_manager = QNetworkAccessManager()
-        self.network_manager.finished.connect(self.on_data_received)
+        # DB연결 후 주석 해제
+        # self.network_manager = QNetworkAccessManager()
+        # self.network_manager.finished.connect(self.on_data_received)
 
         self.show()
 
     def show_status(self):
         # 상태 관리 페이지 표시
         self.stacked_widget.setCurrentWidget(self.status_page)
-        self.fetch_data()
+
+        # DB연결 후 주석 해제
+        # self.fetch_data()
 
     def go_back(self):
         # 메인 페이지로 돌아가기
         self.stacked_widget.setCurrentIndex(0)
+        self.main_page.focus_video_widget()  # 비디오 위젯에 포커스 설정
+    
+    # 아직은 서버에서 fetch 금지
+    # 나중에 db서버와 연결할 예정
 
+    '''
     def fetch_data(self):
         # 서버에서 데이터 요청
         url = QUrl("http://example.com/data")  # 실제 서버 URL로 변경 필요
@@ -265,7 +286,7 @@ class MyApp(QWidget):
         else:
             print("Error occurred: ", er)
             print(reply.errorString())
-
+    '''
     def close_application(self):
         # 애플리케이션 종료
         self.close()
@@ -297,5 +318,9 @@ class MyApp(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    # fontDB = QFontDatabase()
+    # fontDB.addApplicationFont('Noto_Sans_KR\NotoSansKR-VariableFont_wght.ttf')
+    # app.setFont(QFont('NotoSansKR-VariableFont_wght'))
     ex = MyApp()
     sys.exit(app.exec_())

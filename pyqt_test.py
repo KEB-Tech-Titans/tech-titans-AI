@@ -22,10 +22,10 @@ class VideoCaptureWidget(QWidget):
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(30)
 
-        # 비디오 프레임을 표시할 QLabel
+         # 비디오 프레임을 표시할 QLabel
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignCenter)
-        self.video_label.setFixedHeight(400)
+        self.video_label.setFixedHeight(600)
 
         # 레이아웃 설정
         layout = QVBoxLayout()
@@ -65,7 +65,8 @@ class VideoCaptureWidget(QWidget):
             print("이미지 분석 완료")
 
             # 분석된 이미지를 QPixmap으로 변환
-            cvt_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            cvt_img = cv2.resize(img, (900,600))
+            cvt_img = cv2.cvtColor(cvt_img, cv2.COLOR_BGR2RGB)
             qpixmap_result = self.cv2_to_qpixmap(cvt_img)
             
             # QLabel에 표시할 Pixmap으로 설정
@@ -98,16 +99,20 @@ class MainPage(QWidget):
 
         # 실시간 촬영 사진 표시 공간
         self.photo_label = QLabel('캡처된 이미지\n YOLOv8을 통한 검출 사진', self)
-        self.photo_label.setStyleSheet("background-color: lightgray; font-size: 16px; text-align: center;")
+        self.photo_label.setStyleSheet(
+            "background-color: lightgray; font-size: 48px; text-align: center;"
+        )
         self.photo_label.setAlignment(Qt.AlignCenter)
-        self.photo_label.setFixedSize(600, 300)
+        self.photo_label.setFixedSize(900, 600)
         middle_layout.addWidget(self.photo_label)
 
         # 실시간 탐지 결과 표시 공간
         self.detect_label = QLabel('합 / 불 양품 검출', self)
-        self.detect_label.setStyleSheet("background-color: white; font-size: 20px; font-weight: bold; text-align: center; border: 1px solid black;")
+        self.detect_label.setStyleSheet(
+            "background-color: white; font-size: 48px; font-weight: bold; text-align: center; border: 1px solid black;"
+        )
         self.detect_label.setAlignment(Qt.AlignCenter)
-        self.detect_label.setFixedSize(600, 300)
+        self.detect_label.setFixedSize(900, 600)
         middle_layout.addWidget(self.detect_label)
 
         # 비디오 캡처 위젯 추가
@@ -121,7 +126,7 @@ class MainPage(QWidget):
         # 종료 버튼
         self.exit_button = QPushButton('프로그램 종료', self)
         self.exit_button.setStyleSheet("background-color: gray; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
-        self.exit_button.setFixedSize(200, 70)
+        self.exit_button.setFixedSize(200, 100)
         self.exit_button.clicked.connect(parent.close_application)
         bottom_layout.addWidget(self.exit_button)
 
@@ -130,14 +135,14 @@ class MainPage(QWidget):
         # 상태 관리 버튼
         self.status_button = QPushButton('상태 관리', self)
         self.status_button.setStyleSheet("background-color: green; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
-        self.status_button.setFixedSize(200, 70)
+        self.status_button.setFixedSize(200, 100)
         self.status_button.clicked.connect(parent.show_status)
         bottom_layout.addWidget(self.status_button)
 
         # 긴급 버튼
         self.stop_button = QPushButton('긴급 버튼', self)
         self.stop_button.setStyleSheet("background-color: red; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
-        self.stop_button.setFixedSize(200, 70)
+        self.stop_button.setFixedSize(200, 100)
         self.stop_button.clicked.connect(parent.emergency_stop)
         bottom_layout.addWidget(self.stop_button)
 
@@ -160,7 +165,7 @@ class StatusPage(QWidget):
 
         # 상태 관리 페이지 제목
         title = QLabel('12시간 이내 상태 관리 데이터', self)
-        title.setStyleSheet("font-size: 32px; color: white; font-weight:bold;")
+        title.setStyleSheet("font-size: 48px; color: white; font-weight:bold;")
         title.setFixedHeight(70)
         title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(title)
@@ -184,7 +189,7 @@ class StatusPage(QWidget):
         # 프로그램 종료 버튼
         self.exit_button = QPushButton('프로그램 종료', self)
         self.exit_button.setStyleSheet("background-color: gray; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
-        self.exit_button.setFixedSize(200, 70)
+        self.exit_button.setFixedSize(200, 100)
         self.exit_button.clicked.connect(parent.close_application)
         bottom_layout.addWidget(self.exit_button)
 
@@ -193,14 +198,14 @@ class StatusPage(QWidget):
         # 돌아가기 버튼
         self.back_button = QPushButton('돌아가기', self)
         self.back_button.setStyleSheet("background-color: green; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
-        self.back_button.setFixedSize(200, 70)
+        self.back_button.setFixedSize(200, 100)
         self.back_button.clicked.connect(parent.go_back)
         bottom_layout.addWidget(self.back_button)
 
         # 긴급 버튼
         self.emergency_button = QPushButton('긴급 버튼', self)
         self.emergency_button.setStyleSheet("background-color: red; font-size: 24px; font-weight: bold; color: white; border-radius: 5px;")
-        self.emergency_button.setFixedSize(200, 70)
+        self.emergency_button.setFixedSize(200, 100)
         bottom_layout.addWidget(self.emergency_button)
 
         layout.addLayout(bottom_layout)
@@ -209,16 +214,16 @@ class StatusPage(QWidget):
     def create_stat_label(self, layout, label_text, value_text, row, col, rowspan=1, colspan=1):
         # 통계 레이블과 값을 생성하여 레이아웃에 추가
         label = QLabel(label_text, self)
-        label.setStyleSheet("font-size: 36px; color: black; font-weight: bold; padding-top : 15px")
+        label.setStyleSheet("font-size: 48px; color: black; font-weight: bold; padding-top : 15px")
         label.setFixedHeight(70)
         label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(label, row, col, 1, colspan)
 
         value = QLabel(value_text, self)
         value.setStyleSheet(
-            "font-size: 40px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;" 
+            "font-size: 80px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;" 
             if label_text != '결함 비율' 
-            else "font-size: 36px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;"
+            else "font-size: 64px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;"
         )
         value.setAlignment(
             Qt.AlignCenter
@@ -268,7 +273,7 @@ class MyApp(QWidget):
         # self.network_manager = QNetworkAccessManager()
         # self.network_manager.finished.connect(self.on_data_received)
 
-        self.show()
+        self.showFullScreen()
 
     def show_status(self):
         # 상태 관리 페이지 표시

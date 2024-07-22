@@ -64,18 +64,22 @@ class VideoCaptureWidget(QWidget):
             img, results = predict_image_segment_file(rgb_frame)
             print("이미지 분석 완료")
 
-            # 분석된 이미지를 QImage로 변환
-            q_img_result = self.cv2_to_qimage(img)
+            # 분석된 이미지를 QPixmap으로 변환
+            cvt_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            qpixmap_result = self.cv2_to_qpixmap(cvt_img)
             
             # QLabel에 표시할 Pixmap으로 설정
-            self.photo_label.setPixmap(QPixmap.fromImage(q_img_result))
+            self.photo_label.setPixmap(qpixmap_result)
 
-    def cv2_to_qimage(self, cv2_image):
-        '''OpenCV 이미지를 QImage로 변환'''
+    def cv2_to_qpixmap(self, cv2_image):
+        '''OpenCV 이미지를 QPixmap으로 변환'''
         height, width, channel = cv2_image.shape
-        bytes_per_line = 3 * width
+        bytes_per_line = channel * width
+        # QImage로 변환 (RGB 포맷 사용)
         qimage = QImage(cv2_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
-        return qimage
+        # QPixmap으로 변환
+        qpixmap = QPixmap.fromImage(qimage)
+        return qpixmap
 
     def closeEvent(self, event):
         # 타이머 정지 및 웹캠 해제

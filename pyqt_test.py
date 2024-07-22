@@ -5,15 +5,17 @@ from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkRepl
 import sys
 import cv2
 import json
+from segment_model import *
 
 # 메인 화면 웹캠 화면 구성 위젯
+
 class VideoCaptureWidget(QWidget):
     def __init__(self, photo_label, parent=None):
         super().__init__(parent)
         self.photo_label = photo_label
 
         # 웹캠 초기화
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
 
         # 타이머 설정 (30ms 간격으로 업데이트)
         self.timer = QTimer(self)
@@ -50,20 +52,30 @@ class VideoCaptureWidget(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_C:
             self.capture_frame()
-    
+
     # 이미지 촬영
     def capture_frame(self):
         if hasattr(self, 'current_frame'):
             # 캡처된 프레임을 RGB로 변환
             rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
-            
-            # QImage로 변환
-            h, w, ch = rgb_frame.shape
-            bytes_per_line = ch * w
-            qt_image = QImage(rgb_frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
 
-            # QLabel에 표시할 Pixmap으로 설정   
-            self.photo_label.setPixmap(QPixmap.fromImage(qt_image))
+            print("이미지 캡처 완료")
+            # OpenCV 이미지를 분석
+            img, results = predict_image_segment_file(rgb_frame)
+            print("이미지 분석 완료")
+
+            # 분석된 이미지를 QImage로 변환
+            q_img_result = self.cv2_to_qimage(img)
+            
+            # QLabel에 표시할 Pixmap으로 설정
+            self.photo_label.setPixmap(QPixmap.fromImage(q_img_result))
+
+    def cv2_to_qimage(self, cv2_image):
+        '''OpenCV 이미지를 QImage로 변환'''
+        height, width, channel = cv2_image.shape
+        bytes_per_line = 3 * width
+        qimage = QImage(cv2_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
+        return qimage
 
     def closeEvent(self, event):
         # 타이머 정지 및 웹캠 해제
@@ -319,8 +331,15 @@ class MyApp(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    # fontDB = QFontDatabase()
-    # fontDB.addApplicationFont('Noto_Sans_KR\NotoSansKR-VariableFont_wght.ttf')
-    # app.setFont(QFont('NotoSansKR-VariableFont_wght'))
+    # 폰트 DB 생성 및 앱 내 폰트 적용
+    fontDB = QFontDatabase()
+    font_id = fontDB.addApplicationFont('Noto_Sans_KR/NotoSansKR-VariableFont_wght.ttf')
+    if font_id == -1:
+        print("폰트 로딩 실패")
+    else:
+        print("폰트 로딩 성공")
+
+    # 폰트 적용
+    app.setFont(QFont('Noto Sans KR'))
     ex = MyApp()
     sys.exit(app.exec_())

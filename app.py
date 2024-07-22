@@ -13,7 +13,8 @@ required_packages = [
     "opencv-python",
     "numpy",
     "matplotlib",
-    "ultralytics"
+    "ultralytics",
+    "PyQt5"
 ]
 
 # 패키지 설치

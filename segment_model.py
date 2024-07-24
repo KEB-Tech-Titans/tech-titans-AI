@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ultralytics import YOLO
 
-model_segment = YOLO('segement_model_ephocs_30.pt')
+model_segment = YOLO('ephocs_100_batch_16_segment.pt')
 
 # 이미지 리사이징을 위함
 # 추후 최적의 리사이징 크기 찾을시 변경 가능
@@ -54,11 +54,11 @@ def predict_image_segment_file(image):
     created_img, pred_result = create_segement_area(results, resized_pred_img)
 
     # 이미지 시각화 (디버그 코드, 추후 삭제)
-    # plt.figure(figsize=(10, 10))
-    # plt.imshow(created_img)
-    # plt.axis('off')
-    # plt.title('YOLOv8 Segmentation')
-    # plt.show()
+    plt.figure(figsize=(10, 10))
+    plt.imshow(created_img)
+    plt.axis('off')
+    plt.title('YOLOv8 Segmentation')
+    plt.show()
 
     # 예측 결과 JSON 형식으로 변환 후 Spring 서버로 전송 예정
     print(f'Predict result : {pred_result}')
@@ -125,4 +125,4 @@ def create_segement_area(results, img):
         return [img, {'msg' : 'No mask in image'}]
 
 # 테스트
-# predict_image_segment('Oil_0008.png')
+predict_image_segment('Scr_0092.jpg')

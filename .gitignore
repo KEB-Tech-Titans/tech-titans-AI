@@ -1,0 +1,7 @@
+secret.yaml
+
+Lib/
+
+__pycache__/
+
+Scripts/

@@ -35,7 +35,13 @@ from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkRepl
 import sys
 import cv2
 import json
+
+
 from segment_model import *
+from db_connection import *
+
+# db_connection
+conn = ''
 
 # 메인 화면 웹캠 화면 구성 위젯
 class VideoCaptureWidget(QWidget):
@@ -381,13 +387,20 @@ class MyApp(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
+    # mysql DB 접근
+    conn = connect_mysql()
+    if conn:
+        print('DB 연결 성공')
+    else:
+        print('DB 연결 실패')
+
     # 폰트 DB 생성 및 앱 내 폰트 적용
     fontDB = QFontDatabase()
     font_id = fontDB.addApplicationFont('Noto_Sans_KR/NotoSansKR-VariableFont_wght.ttf')
     if font_id == -1:
-        print("폰트 로딩 실패")
-    else:
         print("폰트 로딩 성공")
+    else:
+        print("폰트 로딩 실패")
 
     # 폰트 적용
     app.setFont(QFont('Noto Sans KR'))

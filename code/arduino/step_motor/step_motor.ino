@@ -2,7 +2,7 @@
 
 // Connect a stepper motor with 20 steps per revolution (18 degree)
 // to motor port #1 (M1 and M2)  #2 (M3,M4)
-AF_Stepper motor(20, 1);
+AF_Stepper motor(48, 1);
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps

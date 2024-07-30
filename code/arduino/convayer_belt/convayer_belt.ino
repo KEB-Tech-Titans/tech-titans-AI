@@ -117,12 +117,14 @@ void loop()
       digitalWrite(CONVEYOR, LOW);
       
 
-  }else{
+  }
+  else
+  {
     bObject = false;    
 
     digitalWrite(SENSE, LOW);
     digitalWrite(CONVEYOR, LOW);
-    }
+  }
 
 
 
@@ -143,7 +145,9 @@ void loop()
       digitalWrite(CONVEYOR, LOW);
       delay(3000); //최소 3초간은 계속 흐르게 한다.
 
-  }else{
+  }
+  else
+  {
 
     bBad = false;
 
@@ -153,7 +157,7 @@ void loop()
       digitalWrite(CONVEYOR, LOW);
     }
 
-    }
+  }
 
 
 

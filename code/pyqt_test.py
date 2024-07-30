@@ -51,7 +51,7 @@ class VideoCaptureWidget(QWidget):
 
         # 웹캠 초기화
         # 다른 웹캠 연결시 VideoCapture번호 바꾸기
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
 
         # 타이머 설정 (30ms 간격으로 업데이트)
         self.timer = QTimer(self)
@@ -99,7 +99,6 @@ class VideoCaptureWidget(QWidget):
         if hasattr(self, 'current_frame'):
             # 캡처된 프레임을 RGB로 변환
             rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
-
             print("이미지 캡처 완료")
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)

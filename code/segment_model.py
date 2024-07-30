@@ -9,38 +9,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ultralytics import YOLO
 
-model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\ephocs_100_batch_16_segment.pt')
-
+if os.name == 'nt':
+    model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
+else:
+    model_segment = YOLO('../ai_model/segment_model_20240725.pt')
 # 이미지 리사이징을 위함
 # 추후 최적의 리사이징 크기 찾을시 변경 가능
 img_size = 640
 
 # 이미지 분석 코드
 # 이미지 분석 코드 -> image file path 혹은 image file 자체를 받는 것을 생각
-
-# 이미지 경로가 주어졌을 때 이미지 객체 인식하는 코드
-def predict_image_segment(image_path):
-    predict_image = cv2.imread(image_path)
-
-    resized_pred_img = image_resize(img_size, predict_image)
-
-    results = model_segment(resized_pred_img, task='segment')
-
-    created_img, pred_result = create_segement_area(results, resized_pred_img)
-
-    # 이미지 시각화
-    # debug code -> 추후 삭제
-    # plt.figure(figsize=(10, 10))
-    # plt.imshow(created_img)
-    # plt.axis('off')
-    # plt.title('YOLOv8 Segmentation')
-    # plt.show()
-
-    # pred_result -> json형식으로 변환후 spring 서버로 보낼 예정
-    print(f'Predict result : {pred_result}')
-    
-    return created_img, pred_result
-
 # 이미지 파일 자체를 받아서 이미지를 예측
 def predict_image_segment_file(image):
     # 파일 객체로부터 이미지 데이터 읽기
@@ -54,11 +32,11 @@ def predict_image_segment_file(image):
     created_img, pred_result = create_segement_area(results, resized_pred_img)
 
     # 이미지 시각화 (디버그 코드, 추후 삭제)
-    plt.figure(figsize=(10, 10))
-    plt.imshow(created_img)
-    plt.axis('off')
-    plt.title('YOLOv8 Segmentation')
-    plt.show()
+    # plt.figure(figsize=(10, 10))
+    # plt.imshow(created_img)
+    # plt.axis('off')
+    # plt.title('YOLOv8 Segmentation')
+    # plt.show()
 
     # 예측 결과 JSON 형식으로 변환 후 Spring 서버로 전송 예정
     print(f'Predict result : {pred_result}')
@@ -123,6 +101,3 @@ def create_segement_area(results, img):
     else:
         print("No mask in the image")
         return [img, {'msg' : 'No mask in image'}]
-
-# 테스트
-# predict_image_segment('Scr_0092.jpg')

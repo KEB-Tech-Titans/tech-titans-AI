@@ -115,6 +115,7 @@ class VideoCaptureWidget(QWidget):
             cv2.imwrite(raw_file_name, cv2.cvtColor(rgb_frame, cv2.COLOR_RGB2BGR))
             fileOperation.upload_to_s3(raw_file_name, raw_date_time)
             fileOperation.save_file_info_to_db(raw_file_name, raw_date_time)
+            os.remove(raw_file_name)
             
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
@@ -122,6 +123,7 @@ class VideoCaptureWidget(QWidget):
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
             fileOperation.save_file_info_to_db(analyzed_file_name, analyzed_date_time)
+            os.remove(analyzed_file_name)
 
             # 분석된 이미지를 QPixmap으로 변환
             cvt_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

@@ -5,7 +5,7 @@ from pymysql import Error
 from db_instance import *
 from datetime import datetime
 
-db_info_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+db_info_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
 
 def connect_mysql():
     with open(db_info_file_path) as f:
@@ -103,9 +103,52 @@ def insert_inspection_data(inspection, conn):
 
 # select 쿼리문 4개
 
-# def select_all_count()
-# def select_all_inspection()
-# def select_all_inspection_count()
-# def select_defect_count()
+def select_all_count(conn):
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+    
+    with conn.cursor() as cursor:
+        try:
+            query = "SELECT COUNT(created_at) FROM raw_file WHERE created_at LIKE %s"
+            cursor.execute(query, (today + '%'))
+            result = cursor.fetchone()
+            return result[0]  # 튜플의 첫 번째 요소를 반환
+        except Error as e:
+            print(f"DB Select Query Error: {e}")
+            return 0
+
+def select_all_inspection_count(conn):
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+
+    with conn.cursor() as cursor:
+        try:
+            query = "SELECT COUNT(*) FROM inspection WHERE created_at LIKE %s"
+            cursor.execute(query, (today + '%'))
+            result = cursor.fetchone()
+            return result[0]  # 튜플의 첫 번째 요소를 반환
+        except Error as e:
+            print(f'DB selection Error: {e}')
+            return 0
+
+def select_defect_count(conn):
+    with conn.cursor() as cursor:
+        try:
+            query = '''
+                SELECT defect_type, COUNT(*) as count
+                FROM inspection
+                WHERE DATE(created_at) = CURDATE()
+                GROUP BY defect_type;
+            '''
+            
+            cursor.execute(query)
+            results = cursor.fetchall()
+            # 결과를 사전 형태로 변환
+            defect_ratio = {row[0]: row[1] for row in results}
+            return defect_ratio
+        except Error as e:
+            print(f'DB selection Error : {e}')
+            return {}
+
 
 # test

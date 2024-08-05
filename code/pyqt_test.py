@@ -1,6 +1,6 @@
 # 필요 패키지 설치 코드
 # 패키지 설치 필요시 주석 해제 후 실행
-
+'''
 import subprocess
 import sys
 import math
@@ -29,7 +29,7 @@ for package in required_packages:
         __import__(package)
     except ImportError:
         install(package)
-
+'''
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QTimer, QUrl
 from PyQt5.QtGui import QImage, QPixmap, QFont, QFontDatabase
@@ -219,9 +219,12 @@ class MainPage(QWidget):
 
 # 통계 화면 구성
 class StatusPage(QWidget):
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout()
+
+        self.defect_type = ['Oil', 'Scratch', 'Stain']
 
         # 상태 관리 페이지 제목
         title = QLabel('12시간 이내 상태 관리 데이터', self)
@@ -304,11 +307,26 @@ class StatusPage(QWidget):
 
     # 추후 DB연결 시 바뀔 예정 있음
     def update_status_page(self, data):
-        # 서버에서 받은 데이터로 상태 페이지 업데이트
         self.defect_rate_value.setText(data["defect_rate"])
         self.defect_count_value.setText(data["defect_count"])
-        self.defect_ratio_value.setText("\n".join([f"{k} : {v}" for k, v in data["defect_ratio"].items()]))
+        self.defect_ratio_value.setText("\n".join([f"{self.defect_type[k]} : {v}" for k, v in data["defect_ratio"].items()]))
         self.production_value.setText(data["production"])
+
+    def fetch_and_update_data(self, conn):
+        total_production = select_all_count(conn)
+        defect_count = select_all_inspection_count(conn)
+        defect_ratios = select_defect_count(conn)
+        
+        defect_rate = f"{(defect_count / total_production) * 100:.2f}%" if total_production else "0%"
+
+        data = {
+            "defect_rate": defect_rate,
+            "defect_count": f"{defect_count}건",
+            "defect_ratio": defect_ratios,
+            "production": f"{total_production}개"
+        }
+
+        self.update_status_page(data)
 
 # 화면 이외의 메소드들
 class MyApp(QWidget):
@@ -329,52 +347,26 @@ class MyApp(QWidget):
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
 
-        # DB연결 후 주석 해제
-        # self.network_manager = QNetworkAccessManager()
-        # self.network_manager.finished.connect(self.on_data_received)
+        self.conn = connect_mysql()
 
         self.showFullScreen()
 
     def show_status(self):
-        # 상태 관리 페이지 표시
         self.stacked_widget.setCurrentWidget(self.status_page)
-
-        # DB연결 후 주석 해제
-        # self.fetch_data()
+        if self.conn:
+            self.status_page.fetch_and_update_data(self.conn)
+        else:
+            print('DB 연결 실패')
 
     def go_back(self):
-        # 메인 페이지로 돌아가기
         self.stacked_widget.setCurrentIndex(0)
-        self.main_page.focus_video_widget()  # 비디오 위젯에 포커스 설정
-    
-    # 아직은 서버에서 fetch 금지
-    # 나중에 db서버와 연결할 예정
+        self.main_page.focus_video_widget() 
 
-    '''
-    def fetch_data(self):
-        # 서버에서 데이터 요청
-        url = QUrl("http://example.com/data")  # 실제 서버 URL로 변경 필요
-        request = QNetworkRequest(url)
-        self.network_manager.get(request)
-
-    def on_data_received(self, reply):
-        # 서버에서 데이터 수신 후 처리
-        er = reply.error()
-        if er == QNetworkReply.NoError:
-            bytes_string = reply.readAll()
-            json_data = json.loads(str(bytes_string, 'utf-8'))
-            self.status_page.update_status_page(json_data)
-        else:
-            print("Error occurred: ", er)
-            print(reply.errorString())
-    '''
     def close_application(self):
-        # 애플리케이션 종료
         self.close()
         sys.exit(0)
 
     def emergency_stop(self):
-        # 긴급 멈춤 팝업창
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Warning)
         msg_box.setWindowTitle("긴급 멈춤")
@@ -388,11 +380,9 @@ class MyApp(QWidget):
         msg_box.exec_()
 
         if msg_box.clickedButton() == ok_button:
-            # 재작동 메시지 표시
             QMessageBox.information(self, "재작동", "컨베이어 벨트가 재작동합니다!")
 
     def closeEvent(self, event):
-        # 메인 페이지의 리소스 해제
         self.main_page.closeEvent(event)
         sys.exit(0)
 

@@ -105,13 +105,13 @@ class VideoCaptureWidget(QWidget):
 
     # 이미지 촬영
     def capture_frame(self):
-        print(self)
         if hasattr(self, 'current_frame'):
             # 캡처된 프레임을 RGB로 변환
             rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
             print("이미지 캡처 완료")
             # RGB 프레임을 파일로 저장 (예: 'captured_image.png')
             raw_file_name, raw_date_time = fileOperation.make_raw_file_name(True)
+            print(raw_file_name)
             cv2.imwrite(raw_file_name, cv2.cvtColor(rgb_frame, cv2.COLOR_RGB2BGR))
             fileOperation.upload_to_s3(raw_file_name, raw_date_time)
             fileOperation.save_file_info_to_db(raw_file_name, raw_date_time)

@@ -1,20 +1,28 @@
 import boto3
 from botocore.exceptions import NoCredentialsError
 import sqlite3
+import yaml
 from datetime import datetime
 import os
 from pathlib import Path
 import db_connection, db_instance
 
+yml_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+
+
 def s3_connection():
     try:
         # s3 클라이언트 생성
-        s3 = boto3.client(
-            service_name="s3",
-            region_name="ap-northeast-2",
-            aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY'),
-        )
+        with open(yml_file_path) as f:
+            yaml_info = yaml.load(f, Loader=yaml.FullLoader)
+            s3_info = yaml_info['s3_info']
+
+            s3 = boto3.client(
+                service_name="s3",
+                region_name="ap-northeast-2",
+                aws_access_key_id = s3_info['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key = s3_info['AWS_SECRET_ACCESS_KEY'],
+            )
     except Exception as e:
         print(e)
     else:

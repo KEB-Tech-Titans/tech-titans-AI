@@ -1,6 +1,6 @@
 # 필요 패키지 설치 코드
 # 패키지 설치 필요시 주석 해제 후 실행
-'''
+
 import subprocess
 import sys
 import math
@@ -18,7 +18,9 @@ required_packages = [
     "matplotlib",
     "ultralytics",
     "PyQt5",
-    "pyserial"
+    "pyserial",
+    "pymysql",
+    "boto3"
 ]
 
 # 패키지 설치
@@ -27,7 +29,7 @@ for package in required_packages:
         __import__(package)
     except ImportError:
         install(package)
-'''
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QTimer, QUrl
 from PyQt5.QtGui import QImage, QPixmap, QFont, QFontDatabase
@@ -36,9 +38,10 @@ import sys
 import cv2
 import json
 
-
 from segment_model import *
 from db_connection import *
+
+import fileOperation
 
 # db_connection
 conn = ''
@@ -57,7 +60,7 @@ class VideoCaptureWidget(QWidget):
 
         # 웹캠 초기화
         # 다른 웹캠 연결시 VideoCapture번호 바꾸기
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
 
         # 타이머 설정 (30ms 간격으로 업데이트)
         self.timer = QTimer(self)
@@ -102,13 +105,23 @@ class VideoCaptureWidget(QWidget):
 
     # 이미지 촬영
     def capture_frame(self):
+        print(self)
         if hasattr(self, 'current_frame'):
             # 캡처된 프레임을 RGB로 변환
             rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
             print("이미지 캡처 완료")
+            # RGB 프레임을 파일로 저장 (예: 'captured_image.png')
+            raw_file_name, raw_date_time = fileOperation.make_raw_file_name(True)
+            cv2.imwrite(raw_file_name, cv2.cvtColor(rgb_frame, cv2.COLOR_RGB2BGR))
+            fileOperation.upload_to_s3(raw_file_name, raw_date_time)
+            fileOperation.save_file_info_to_db(raw_file_name, raw_date_time)
+            
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
-            print("이미지 분석 완료")
+            analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
+            cv2.imwrite(analyzed_file_name, img)
+            fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
+            fileOperation.save_file_info_to_db(analyzed_file_name, analyzed_date_time)
 
             # 분석된 이미지를 QPixmap으로 변환
             cvt_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

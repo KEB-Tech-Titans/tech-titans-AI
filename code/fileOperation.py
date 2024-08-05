@@ -1,0 +1,86 @@
+import boto3
+from botocore.exceptions import NoCredentialsError
+import sqlite3
+from datetime import datetime
+import os
+from pathlib import Path
+import db_connection, db_instance
+
+def s3_connection():
+    try:
+        # s3 클라이언트 생성
+        s3 = boto3.client(
+            service_name="s3",
+            region_name="ap-northeast-2",
+            aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY'),
+        )
+    except Exception as e:
+        print(e)
+    else:
+        print("s3 bucket connected!") 
+        return s3
+        
+s3 = s3_connection()
+
+def make_raw_file_name(isRowFile):
+    upload_date_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    upload_date = upload_date_time.split(" ")[0]
+    upload_date = upload_date.replace("-", "")
+    upload_time = upload_date_time.split(" ")[1]
+    upload_time = upload_time.replace(":", "")
+    if (isRowFile):
+        raw_file_name = "R_L01_" + upload_date + "_" + upload_time + ".png"
+    else:
+        raw_file_name = "A_L01_" + upload_date + "_" + upload_time + ".png"
+    return raw_file_name, upload_date_time
+
+
+def upload_to_s3(file_name, upload_date_time):
+    try:
+        s3.upload_file(file_name, 'tech-titans-s3', file_name)
+        print(f"{file_name} has been uploaded to tech-titans-s3")
+        return file_name, upload_date_time
+    except FileNotFoundError:
+        print("The file was not found")
+    except NoCredentialsError:
+        print("Credentials not available")
+
+def save_file_info_to_db(file_path, upload_date_time):
+
+    # 파일 경로
+    #file_path = "red5.jpg"
+
+    # 파일 객체 생성
+    file = Path(file_path)
+
+    # 파일 이름
+    file_name = file.name
+    print(f"파일 이름: {file_name}")
+
+    # 파일 확장자 추출
+    file_extension = file.suffix
+    print(f"파일 확장자: {file_extension}")
+
+    # 파일 크기 추출
+    file_size = os.path.getsize(file_path)
+    print(f"파일 크기: {file_size} 바이트")
+    
+
+    new_row_file = db_instance.RawFile(
+    saved_file_name = file_name,
+    created_at = upload_date_time,
+    updated_at = upload_date_time,
+    content_type = file_extension,
+    file_size = file_size,
+    saved_path =f"https://tech-titans-s3.s3.amazonaws.com/{file_name}"
+)
+    print(new_row_file.saved_file_name)
+    db_connection.insert_raw_file_data(new_row_file, db_connection.connect_mysql())
+
+# 예제 실행
+"""file_path = 'red5.jpg'
+bucket = 'tech-titans-s3'
+
+raw_file_name, upload_date_time = upload_to_s3(bucket)
+save_file_info_to_db(file_path, bucket, upload_date_time)"""

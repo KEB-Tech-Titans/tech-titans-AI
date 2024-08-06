@@ -5,8 +5,8 @@ from pymysql import Error
 from db_instance import *
 from datetime import datetime
 
-db_info_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
-#db_info_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
+# db_info_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+db_info_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
 
 def connect_mysql():
     with open(db_info_file_path) as f:

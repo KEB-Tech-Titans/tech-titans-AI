@@ -1,35 +1,3 @@
-# 필요 패키지 설치 코드
-# 패키지 설치 필요시 주석 해제 후 실행
-'''
-import subprocess
-import sys
-import math
-
-# 패키지를 설치하는 함수
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-# 필요한 패키지 목록
-required_packages = [
-    "flask",
-    "werkzeug",
-    "opencv-python",
-    "numpy",
-    "matplotlib",
-    "ultralytics",
-    "PyQt5",
-    "pyserial",
-    "pymysql",
-    "boto3"
-]
-
-# 패키지 설치
-for package in required_packages:
-    try:
-        __import__(package)
-    except ImportError:
-        install(package)
-'''
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QTimer, QUrl
 from PyQt5.QtGui import QImage, QPixmap, QFont, QFontDatabase
@@ -40,8 +8,10 @@ import json
 
 from segment_model import *
 from db_connection import *
+from db_instance import *
 
 import fileOperation
+import serial_connect  # serial_connect 모듈 임포트
 
 # db_connection
 conn = ''
@@ -119,7 +89,29 @@ class VideoCaptureWidget(QWidget):
             
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
+            
+            # inspection DB에 들어가는 정보를 저장
+            all_defect = ['oil', 'stain', 'scratch']
+            inspections = []    # 이거 DB에 파싱해서 넣으시면 됩니다
+            for result in results:
+                try:
+                    if result['class'] in all_defect:
+                        inspections.append(result)
+                except:
+                    break
+            print(f'inspections : {inspections}')
+
+            # 분석결과!!
+            result = results[len(results) - 1]
+            # 분석결과 양품 불량품 판정
+            if result['condition'] == 'pass':
+                is_passed = True
+            else:
+                is_passed = False
+
+            # 분석된 결과 db 및 s3 내부에 저장
             analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
+
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
             fileOperation.save_file_info_to_db(analyzed_file_name, analyzed_date_time)
@@ -131,6 +123,14 @@ class VideoCaptureWidget(QWidget):
             
             # QLabel에 표시할 Pixmap으로 설정
             self.photo_label.setPixmap(qpixmap_result)
+
+            # 아두이노 모터에 결과 전송!!!!!!!
+
+            # 분석 결과에 따라 pass 또는 fail 명령 전송
+            if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+                serial_connect.send_command("pass")
+            else:
+                serial_connect.send_command("fail")
 
     def cv2_to_qpixmap(self, cv2_image):
         '''OpenCV 이미지를 QPixmap으로 변환'''
@@ -146,6 +146,7 @@ class VideoCaptureWidget(QWidget):
         # 타이머 정지 및 웹캠 해제
         self.timer.stop()
         self.cap.release()
+        serial_connect.ser.close()  # 시리얼 포트 닫기
 
 # 메인 화면 구성
 class MainPage(QWidget):

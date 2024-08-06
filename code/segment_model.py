@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from ultralytics import YOLO
 
 if os.name == 'nt':
-    model_segment = YOLO('C:\\0.git\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
-    #model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
+    # model_segment = YOLO('C:\\0.git\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
+    model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
 else:
     model_segment = YOLO('../ai_model/segment_model_20240725.pt')
 # 이미지 리사이징을 위함
@@ -98,7 +98,23 @@ def create_segement_area(results, img):
                 class_label = classes[class_id]
                 cv2.putText(img, f'{class_label}', (int(x), int(y) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
+        if not contains_single_smartphone(result_array):
+            result_array.append({'condition' : 'fail'})
+        else:
+            if contains_no_oil_stain_scratch(result_array):
+                result_array.append({'condition' : 'pass'})
+            else:
+                result_array.append({'condition' : 'fail'})
+
         return [img, result_array]
     else:
         print("No mask in the image")
         return [img, {'msg' : 'No mask in image'}]
+    
+def contains_single_smartphone(result_array):
+    smartphone_count = sum(1 for result_dict in result_array if result_dict.get('class') == 'smartphone')
+    return smartphone_count == 1
+
+def contains_no_oil_stain_scratch(result_array):
+    unwanted_classes = {'oil', 'stain', 'scratch'}
+    return not any(result_dict.get('class') in unwanted_classes for result_dict in result_array)

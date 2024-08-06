@@ -76,6 +76,8 @@ void loop()
   Serial.print("Product Distance_ : ");
   Serial.print(distance_); //측정된 물체로부터 거리값(cm값)을 보여줍니다.
   Serial.print(" Cm,   ");
+  
+  // 물체가 센서에 닿았을떄 -> 물체 인식
   if(distance < 10)
   {
       bObject = true;
@@ -115,13 +117,10 @@ void loop()
       }
 
       digitalWrite(CONVEYOR, LOW);
-      
-
   }
   else
   {
     bObject = false;    
-
     digitalWrite(SENSE, LOW);
     digitalWrite(CONVEYOR, LOW);
   }

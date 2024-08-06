@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 import db_connection, db_instance
 
-# yml_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
-yml_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
+yml_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+# yml_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
 
 
 def s3_connection():
@@ -55,7 +55,7 @@ def upload_to_s3(file_name, upload_date_time):
     except NoCredentialsError:
         print("Credentials not available")
 
-def save_file_info_to_db(file_path, upload_date_time):
+def save_file_info_to_raw_file_table(file_path, upload_date_time):
 
     # 파일 경로
     #file_path = "red5.jpg"
@@ -83,13 +83,40 @@ def save_file_info_to_db(file_path, upload_date_time):
     content_type = file_extension,
     file_size = file_size,
     saved_path =f"https://tech-titans-s3.s3.amazonaws.com/{file_name}"
-)
-    print(new_row_file.saved_file_name)
+    )
     db_connection.insert_raw_file_data(new_row_file, db_connection.connect_mysql())
 
-# 예제 실행
-"""file_path = 'red5.jpg'
-bucket = 'tech-titans-s3'
+def save_file_info_to_analyzed_file_table(file_path, upload_date_time, is_passed, raw_file_name):
 
-raw_file_name, upload_date_time = upload_to_s3(bucket)
-save_file_info_to_db(file_path, bucket, upload_date_time)"""
+    # 파일 경로
+    #file_path = "red5.jpg"
+
+    # 파일 객체 생성
+    file = Path(file_path)
+
+    # 파일 이름
+    file_name = file.name
+    print(f"파일 이름: {file_name}")
+
+    # 파일 확장자 추출
+    file_extension = file.suffix
+    print(f"파일 확장자: {file_extension}")
+
+    # 파일 크기 추출
+    file_size = os.path.getsize(file_path)
+    print(f"파일 크기: {file_size} 바이트")
+    
+
+    new_analyzed_file = db_instance.AnalyzedFile(
+    saved_file_name = file_name,
+    created_at = upload_date_time,
+    updated_at = upload_date_time,
+    content_type = file_extension,
+    file_size = file_size,
+    is_passed = is_passed,
+    raw_file_name = raw_file_name,
+    saved_path =f"https://tech-titans-s3.s3.amazonaws.com/{file_name}"
+    )
+    db_connection.insert_analyzed_field_data(new_analyzed_file, db_connection.connect_mysql())
+
+

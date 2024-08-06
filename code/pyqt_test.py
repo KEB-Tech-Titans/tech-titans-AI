@@ -11,7 +11,8 @@ from db_connection import *
 from db_instance import *
 
 import fileOperation
-import serial_connect  # serial_connect 모듈 임포트
+import db_connection, db_instance
+#import serial_connect  # serial_connect 모듈 임포트
 
 # db_connection
 conn = ''
@@ -81,15 +82,33 @@ class VideoCaptureWidget(QWidget):
             print("이미지 캡처 완료")
             # RGB 프레임을 파일로 저장 (예: 'captured_image.png')
             raw_file_name, raw_date_time = fileOperation.make_raw_file_name(True)
-            print(raw_file_name)
             cv2.imwrite(raw_file_name, cv2.cvtColor(rgb_frame, cv2.COLOR_RGB2BGR))
             fileOperation.upload_to_s3(raw_file_name, raw_date_time)
-            fileOperation.save_file_info_to_db(raw_file_name, raw_date_time)
+            fileOperation.save_file_info_to_raw_file_table(raw_file_name, raw_date_time)
             os.remove(raw_file_name)
             
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
             
+            """# 분석결과!!
+            if (results):
+                is_passed = False
+            else:
+                result = results[len(results) - 1]
+                # 분석결과 양품 불량품 판정
+                if result['condition'] == 'pass':
+                    is_passed = True
+                else:
+                    is_passed = False"""
+
+            # 분석된 결과 db 및 s3 내부에 저장
+            analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
+
+            cv2.imwrite(analyzed_file_name, img)
+            fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
+            #False 대신 is_passed 전달하는 것으로 수정!!!!!!!!!!!!!!!!!!!!!!!
+            fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, False, raw_file_name)
+
             # inspection DB에 들어가는 정보를 저장
             all_defect = ['oil', 'stain', 'scratch']
             inspections = []    # 이거 DB에 파싱해서 넣으시면 됩니다
@@ -101,20 +120,17 @@ class VideoCaptureWidget(QWidget):
                     break
             print(f'inspections : {inspections}')
 
-            # 분석결과!!
-            result = results[len(results) - 1]
-            # 분석결과 양품 불량품 판정
-            if result['condition'] == 'pass':
-                is_passed = True
-            else:
-                is_passed = False
-
-            # 분석된 결과 db 및 s3 내부에 저장
-            analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
-
-            cv2.imwrite(analyzed_file_name, img)
-            fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
-            fileOperation.save_file_info_to_db(analyzed_file_name, analyzed_date_time)
+            for inspection in inspections:
+                print(inspection)
+                new_inspection = db_instance.Inspection(
+                    created_at = analyzed_date_time,
+                    updated_at = analyzed_date_time,
+                    analyzed_file_name = analyzed_file_name,
+                    area = inspection['area'],
+                    defect_type=inspection['class'],
+                )
+                db_connection.insert_inspection_data(new_inspection, db_connection.connect_mysql())
+                print("inspection 테이블에 저장완료")
             os.remove(analyzed_file_name)
 
             # 분석된 이미지를 QPixmap으로 변환
@@ -127,10 +143,10 @@ class VideoCaptureWidget(QWidget):
             # 아두이노 모터에 결과 전송!!!!!!!
 
             # 분석 결과에 따라 pass 또는 fail 명령 전송
-            if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+            """if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
                 serial_connect.send_command("pass")
             else:
-                serial_connect.send_command("fail")
+                serial_connect.send_command("fail")"""
 
     def cv2_to_qpixmap(self, cv2_image):
         '''OpenCV 이미지를 QPixmap으로 변환'''

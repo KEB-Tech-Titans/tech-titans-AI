@@ -2,7 +2,7 @@ import serial
 import time
 
 # 시리얼 포트 설정 (올바른 포트 번호로 수정)
-arduino_port = 'COM8'  # 실제 포트에 맞게 설정
+arduino_port = 'COM7'  # 실제 포트에 맞게 설정
 baud_rate = 9600
 
 # 시리얼 포트 열기

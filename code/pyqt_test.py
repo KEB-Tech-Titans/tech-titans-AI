@@ -106,7 +106,7 @@ class VideoCaptureWidget(QWidget):
 
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
-            #False 대신 is_passed 전달하는 것으로 수정!!!!!!!!!!!!!!!!!!!!!!!
+            # False 대신 is_passed 전달하는 것으로 수정!!!!!!!!!!!!!!!!!!!!!!!
             fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, False, raw_file_name)
 
             # inspection DB에 들어가는 정보를 저장
@@ -162,7 +162,7 @@ class VideoCaptureWidget(QWidget):
         # 타이머 정지 및 웹캠 해제
         self.timer.stop()
         self.cap.release()
-        serial_connect.ser.close()  # 시리얼 포트 닫기
+        # serial_connect.ser.close()  # 시리얼 포트 닫기
 
 # 메인 화면 구성
 class MainPage(QWidget):
@@ -296,16 +296,16 @@ class StatusPage(QWidget):
     def create_stat_label(self, layout, label_text, value_text, row, col, rowspan=1, colspan=1):
         # 통계 레이블과 값을 생성하여 레이아웃에 추가
         label = QLabel(label_text, self)
-        label.setStyleSheet("font-size: 36px; color: black; font-weight: bold; padding-top : 15px")
+        label.setStyleSheet("font-size: 68px; color: black; font-weight: bold; padding-top : 15px")
         label.setFixedHeight(70)
         label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(label, row, col, 1, colspan)
 
         value = QLabel(value_text, self)
         value.setStyleSheet(
-            "font-size: 40px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;" 
+            "font-size: 68px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;" 
             if label_text != '결함 비율' 
-            else "font-size: 36px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;"
+            else "font-size: 64px; color: black; border: 1px solid #CACACA; border-radius: 15px; font-weight: bold;"
         )
         value.setAlignment(
             Qt.AlignCenter
@@ -328,20 +328,26 @@ class StatusPage(QWidget):
     def update_status_page(self, data):
         self.defect_rate_value.setText(data["defect_rate"])
         self.defect_count_value.setText(data["defect_count"])
-        self.defect_ratio_value.setText("\n".join([f"{self.defect_type[k]} : {v}" for k, v in data["defect_ratio"].items()]))
+        self.defect_ratio_value.setText("\n".join([f"{self.defect_type[k]} : {v}건" for k, v in data["inspection_count"].items()]))
         self.production_value.setText(data["production"])
 
     def fetch_and_update_data(self, conn):
         total_production = select_all_count(conn)
         defect_count = select_all_inspection_count(conn)
-        defect_ratios = select_defect_count(conn)
+        inspection_count = select_defect_count(conn)
         
+
+        # inspection count 정리
+        for key in range(len(self.defect_type)):  # 0, 1, 2의 키를 확인
+            if key not in inspection_count:
+                inspection_count[key] = 0
+
         defect_rate = f"{(defect_count / total_production) * 100:.2f}%" if total_production else "0%"
 
         data = {
             "defect_rate": defect_rate,
             "defect_count": f"{defect_count}건",
-            "defect_ratio": defect_ratios,
+            "inspection_count": inspection_count,
             "production": f"{total_production}개"
         }
 

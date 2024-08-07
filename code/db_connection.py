@@ -5,8 +5,8 @@ from pymysql import Error
 from db_instance import *
 from datetime import datetime
 
-db_info_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
-#db_info_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
+# db_info_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+db_info_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
 
 def connect_mysql():
     with open(db_info_file_path) as f:
@@ -124,7 +124,7 @@ def select_all_inspection_count(conn):
 
     with conn.cursor() as cursor:
         try:
-            query = "SELECT COUNT(*) FROM inspection WHERE created_at LIKE %s"
+            query = "SELECT COUNT(*) FROM analyzed_file WHERE created_at LIKE %s and is_passed = false"
             cursor.execute(query, (today + '%'))
             result = cursor.fetchone()
             return result[0]  # 튜플의 첫 번째 요소를 반환
@@ -133,16 +133,19 @@ def select_all_inspection_count(conn):
             return 0
 
 def select_defect_count(conn):
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+
     with conn.cursor() as cursor:
         try:
             query = '''
                 SELECT defect_type, COUNT(*) as count
                 FROM inspection
-                WHERE DATE(created_at) = CURDATE()
+                WHERE created_at like %s
                 GROUP BY defect_type;
             '''
             
-            cursor.execute(query)
+            cursor.execute(query, (today + '%'))
             results = cursor.fetchall()
             # 결과를 사전 형태로 변환
             defect_ratio = {row[0]: row[1] for row in results}

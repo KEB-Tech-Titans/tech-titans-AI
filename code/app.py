@@ -96,14 +96,6 @@ def analyze():
     
     print(dto_result)
 
-    smartphone_area = [ dic['area'] for dic in dto_result['inspections'] if dic['class'] == 'smartphone'][0]
-    defect_area = {}
-    defect_area['stain'] = sum([ dic['area'] for dic in dto_result['inspections'] if dic['class'] == 'stain' ])
-
-    DLI = {}
-    DLI['stain'] = math.log(defect_area['stain'] / smartphone_area, 1.1) if defect_area['stain'] != 0 else "clear"
-    print(DLI['stain'])
-
     """
     for dic in dto_result['inspections']:
         if dic['class'] == 'smartphone':

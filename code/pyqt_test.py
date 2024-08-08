@@ -5,6 +5,7 @@ from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkRepl
 import sys
 import cv2
 import json
+import math
 
 from segment_model import *
 from db_connection import *
@@ -16,6 +17,49 @@ import serial_connect  # serial_connect 모듈 임포트
 
 # db_connection
 conn = ''
+
+def calc_defect_severity(segments):
+    # 스마트폰 면적 추출 
+    smartphone_area_list = [segment['area'] for segment in segments if segment.get('class') == 'smartphone']
+    if len(smartphone_area_list) == 0:
+        return -1
+    
+    smartphone_area = smartphone_area_list[0]
+
+    defect_areas = {}
+    for segment in segments:
+        # smaprtphone은 결함이 아니니 예외처리
+        if 'class' not in segment or segment['class'] == 'smartphone':
+            continue
+
+        # defect_area에 클래스가 없는 경우 .0으로 초기화
+        if segment['class'] not in defect_areas:
+            defect_areas[segment['class']] = .0
+        
+        # 해당 클래스의 결함 면적을 추가
+        defect_areas[segment['class']] += segment['area']
+
+    # 결함의 개수가 0이라면 바로 return 0
+    if len(defect_areas) == 0:
+        return 0
+    
+    # 스마트폰 면적 대비 결함의 크기 계산
+    defect_rates = {}
+    for defect_class, area in defect_areas.items():
+        if area > smartphone_area:
+            return -1
+
+        defect_rates[defect_class] = area / smartphone_area
+    
+    defect_coef = {'oil': 1, 'stain': 10, 'scratch': 30}
+    defect_severity = 0.0
+    for defect_class, rate in defect_rates.items():
+        severity = math.log(rate, math.sqrt(2)) * defect_coef[defect_class] * -1
+        print(severity)
+        defect_severity +=  severity
+
+    return min(int(defect_severity), 100)
+
 
 # 메인 화면 웹캠 화면 구성 위젯
 class VideoCaptureWidget(QWidget):
@@ -109,7 +153,10 @@ class VideoCaptureWidget(QWidget):
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
             # 태윤님 여기에 defect_severity를 변수 선언하고 계산해주세요
-            print(results)
+
+            defect_severity = calc_defect_severity(results)
+            print(defect_severity)
+
             fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, is_passed, raw_file_name, defect_severity)
 
             # inspection DB에 들어가는 정보를 저장
@@ -165,7 +212,7 @@ class VideoCaptureWidget(QWidget):
         # 타이머 정지 및 웹캠 해제
         self.timer.stop()
         self.cap.release()
-        serial_connect.ser.close()  # 시리얼 포트 닫기
+        serial_connect.serial.close()  # 시리얼 포트 닫기
 
 # 메인 화면 구성
 class MainPage(QWidget):

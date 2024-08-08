@@ -12,7 +12,7 @@ from db_instance import *
 
 import fileOperation
 import db_connection, db_instance
-#import serial_connect  # serial_connect 모듈 임포트
+import serial_connect  # serial_connect 모듈 임포트
 
 # db_connection
 conn = ''
@@ -90,7 +90,7 @@ class VideoCaptureWidget(QWidget):
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
             
-            """# 분석결과!!
+            # 분석결과!!
             if (results):
                 is_passed = False
             else:
@@ -99,7 +99,7 @@ class VideoCaptureWidget(QWidget):
                 if result['condition'] == 'pass':
                     is_passed = True
                 else:
-                    is_passed = False"""
+                    is_passed = False
 
             # 분석된 결과 db 및 s3 내부에 저장
             analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
@@ -107,7 +107,7 @@ class VideoCaptureWidget(QWidget):
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
             # False 대신 is_passed 전달하는 것으로 수정!!!!!!!!!!!!!!!!!!!!!!!
-            fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, False, raw_file_name)
+            fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, is_passed, raw_file_name)
 
             # inspection DB에 들어가는 정보를 저장
             all_defect = ['oil', 'stain', 'scratch']
@@ -143,10 +143,10 @@ class VideoCaptureWidget(QWidget):
             # 아두이노 모터에 결과 전송!!!!!!!
 
             # 분석 결과에 따라 pass 또는 fail 명령 전송
-            """if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+            if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
                 serial_connect.send_command("pass")
             else:
-                serial_connect.send_command("fail")"""
+                serial_connect.send_command("fail")
 
     def cv2_to_qpixmap(self, cv2_image):
         '''OpenCV 이미지를 QPixmap으로 변환'''
@@ -162,7 +162,7 @@ class VideoCaptureWidget(QWidget):
         # 타이머 정지 및 웹캠 해제
         self.timer.stop()
         self.cap.release()
-        # serial_connect.ser.close()  # 시리얼 포트 닫기
+        serial_connect.ser.close()  # 시리얼 포트 닫기
 
 # 메인 화면 구성
 class MainPage(QWidget):

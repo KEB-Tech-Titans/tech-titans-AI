@@ -7,30 +7,27 @@ import time
 motor_port = 'COM8'  # 실제 포트에 맞게 설정
 motor_baud_rate = 9600
 
+# 컨베이어 아두이노 포트
+conveyor_port = 'COM7'
+conveyor_baud_rate = 9600
+
 # 시리얼 포트 열기
-ser = serial.Serial(motor_port, motor_baud_rate, timeout=10)
+motor_ser = serial.Serial(motor_port, motor_baud_rate, timeout=10)
 time.sleep(2)  # 연결 안정화를 위해 잠시 대기
 
-def send_command(command):
+# conveyor_ser = serial.Serial(conveyor_port, conveyor_baud_rate, timeout=10)
+# time.sleep(2)
+
+def send_command(ser, command):
     ser.write(f"{command}\n".encode())         
     print(f"Sent to Arduino: {command}")
 
-def control_motor(ser, product_status):
-    try:
-        while True:
-            if ser.in_waiting > 0:
-                arduino_data = ser.readline().decode().strip()
-                print(f"Arduino: {arduino_data}")
-
-                # 제품이 감지되었을 때 응답
-                if "Waiting Pass or Fail." in arduino_data:
-                    # 제품 상태를 판단하는 로직
-                    send_command(product_status)
-
-            time.sleep(1)  # 1초 대기
-
-    except KeyboardInterrupt:
-        print("종료합니다.")
-
-    finally:
-        ser.close()  # 시리얼 포트 닫기
+def receive_command(ser, command):
+    while True:
+        if ser.in_waiting > 0:
+            data = ser.readline().decode().strip()
+            if data == "OBJECT_DETECTED":
+                print("Object detected. Analyzing...")
+                # 분석 결과 (예: Pass 또는 Fail)
+                analysis_result = "PASS"  # 실제 분석 로직을 여기에 추가
+                ser.write(analysis_result.encode())

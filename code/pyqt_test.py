@@ -68,6 +68,8 @@ class VideoCaptureWidget(QWidget):
             self.video_label.setPixmap(QPixmap.fromImage(qt_image))
             self.current_frame = frame  # 현재 프레임 저장
     
+    # def conveyor_sensor_event(self):
+    #     if serial_connect.conveyor_ser
     # 특정 트리거를 통한 캡처 이벤트
     # 추후 컨베이어 벨트 센서 접촉시 촬영으로 변경 예정
     def keyPressEvent(self, event):
@@ -89,7 +91,8 @@ class VideoCaptureWidget(QWidget):
             
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
-            
+            is_passed = False
+
             # 분석결과!!
             if (results):
                 is_passed = False
@@ -144,9 +147,9 @@ class VideoCaptureWidget(QWidget):
 
             # 분석 결과에 따라 pass 또는 fail 명령 전송
             if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
-                serial_connect.send_command("pass")
+                serial_connect.send_command(serial_connect.motor_ser, "pass")
             else:
-                serial_connect.send_command("fail")
+                serial_connect.send_command(serial_connect.motor_ser, "fail")
 
     def cv2_to_qpixmap(self, cv2_image):
         '''OpenCV 이미지를 QPixmap으로 변환'''

@@ -16,7 +16,7 @@ analyzed file table info
 class AnalyzedFile:
     def __init__(
             self, saved_file_name, created_at, updated_at, content_type,
-            file_size, is_passed, raw_file_name, saved_path
+            file_size, is_passed, raw_file_name, saved_path, defect_severity
             ):
         self.saved_file_name = saved_file_name
         self.created_at = created_at
@@ -26,6 +26,7 @@ class AnalyzedFile:
         self.is_passed = is_passed
         self.raw_file_name = raw_file_name
         self.saved_path = saved_path
+        self.defect_severity = defect_severity
 
 '''
     raw_file table info

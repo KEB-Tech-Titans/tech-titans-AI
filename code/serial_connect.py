@@ -1,7 +1,7 @@
 import serial
 import time
 
-# 시리얼 포트 설정 (올바른 포트 번호로 수정)
+"""# 시리얼 포트 설정 (올바른 포트 번호로 수정)
 
 # 모터 아두이노 연결 코드
 motor_port = 'COM8'  # 실제 포트에 맞게 설정
@@ -30,4 +30,4 @@ def receive_command(ser, command):
                 print("Object detected. Analyzing...")
                 # 분석 결과 (예: Pass 또는 Fail)
                 analysis_result = "PASS"  # 실제 분석 로직을 여기에 추가
-                ser.write(analysis_result.encode())
+                ser.write(analysis_result.encode())"""

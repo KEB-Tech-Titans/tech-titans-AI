@@ -106,11 +106,11 @@ class VideoCaptureWidget(QWidget):
 
             # 분석된 결과 db 및 s3 내부에 저장
             analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
-
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
-            # False 대신 is_passed 전달하는 것으로 수정!!!!!!!!!!!!!!!!!!!!!!!
-            fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, is_passed, raw_file_name)
+            # 태윤님 여기에 defect_severity를 변수 선언하고 계산해주세요
+            print(results)
+            fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, is_passed, raw_file_name, defect_severity)
 
             # inspection DB에 들어가는 정보를 저장
             all_defect = ['oil', 'stain', 'scratch']

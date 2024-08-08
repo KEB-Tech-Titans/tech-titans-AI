@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 import db_connection, db_instance
 
-# yml_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
-yml_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
+yml_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+#yml_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
 
 
 def s3_connection():
@@ -86,7 +86,7 @@ def save_file_info_to_raw_file_table(file_path, upload_date_time):
     )
     db_connection.insert_raw_file_data(new_row_file, db_connection.connect_mysql())
 
-def save_file_info_to_analyzed_file_table(file_path, upload_date_time, is_passed, raw_file_name):
+def save_file_info_to_analyzed_file_table(file_path, upload_date_time, is_passed, raw_file_name, defect_severity):
 
     # 파일 경로
     #file_path = "red5.jpg"
@@ -115,7 +115,8 @@ def save_file_info_to_analyzed_file_table(file_path, upload_date_time, is_passed
     file_size = file_size,
     is_passed = is_passed,
     raw_file_name = raw_file_name,
-    saved_path =f"https://tech-titans-s3.s3.amazonaws.com/{file_name}"
+    saved_path =f"https://tech-titans-s3.s3.amazonaws.com/{file_name}",
+    defect_severity = defect_severity
     )
     db_connection.insert_analyzed_field_data(new_analyzed_file, db_connection.connect_mysql())
 

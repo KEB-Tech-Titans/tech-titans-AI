@@ -77,43 +77,17 @@
     Serial.print(distance_); //측정된 물체로부터 거리값(cm값)을 보여줍니다.
     Serial.print(" Cm,   ");
     
-    // 물체가 센서에 닿았을떄 -> 물체 인식
+    // LOW -> 출발, HIGH -> 멈춤
+    // 물체가 센서에 닿았을떄 -> 물체 인식 -> 영상 촬영
     if(distance < 10)
     {
         bObject = true;
 
-        Serial.print("Product Sensing...     ");
+        Serial.println("Product Sensing...");
+        Serial.println("Captured Frame");
         digitalWrite(SENSE, HIGH);
         digitalWrite(CONVEYOR, HIGH);
-
-        Serial.print("Waiting Pass or Fail. ");
-        delay(5000); //5초 안에 양불량 판별하라
-        Serial.print("Write Pass or Fail..... ");
-        String str = Serial.readString();
-        str.trim();
-
-        String pass = "Pass";
-
-        if(pass.compareTo(str)==0)
-        {
-          bPass = true;
-          Serial.println("This product is good !!!,run 10 seconds ");
-          
-          digitalWrite(CONVEYOR, LOW);
-          delay(10000);//최소 10초간은 계속 흐르게 하고 continue
-
-        }else{
-          bPass = false;
-          Serial.println("This product is bad !!!");
-          digitalWrite(CONVEYOR, LOW);
-          
-          delay(3000);//최소 3초간은 계속 흐르게 한다.
-
-        }
-
-        Serial.print("End Waiting... ");
-        
-
+        delay(5000);
         digitalWrite(CONVEYOR, LOW);
     }
     else
@@ -129,19 +103,27 @@
     Serial.print("Move Distance : ");
     Serial.print(distance); //측정된 물체로부터 거리값(cm값)을 보여줍니다.
     Serial.println(" Cm");
-    if(distance_ < 10 && !bPass)
+    if(distance_ < 10 && bObject)
     {
       bBad = true;
 
-        Serial.print("Move Sensing...    ");
-        digitalWrite(SENSE_, HIGH);
-        digitalWrite(CONVEYOR, HIGH);
+      Serial.println("Waiting process...");
+      digitalWrite(SENSE_, HIGH);
+      digitalWrite(CONVEYOR, HIGH);
 
-        delay(5000);//5초 안에 양불량 분리하라
+      String str = Serial.readString();
+      str.trim();
 
-        digitalWrite(CONVEYOR, LOW);
-        delay(3000); //최소 3초간은 계속 흐르게 한다.
-
+      // 분석이 끝나면 컴퓨터 -> 컨베이어벨트로 분석 완료 신호를 보냄
+      while(true){
+        if(str.compareTo() == "end")
+        {
+          Serial.println("Analyzing Finished");
+          digitalWrite(CONVEYOR, LOW);
+          delay(1000);
+          break;
+        }
+      }
     }
     else
     {
@@ -155,8 +137,6 @@
       }
 
     }
-
-
 
     delay(1000); //1초마다 측정값을 보여줍니다.
 

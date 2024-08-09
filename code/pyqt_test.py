@@ -198,10 +198,10 @@ class VideoCaptureWidget(QWidget):
             # 아두이노 모터에 결과 전송!!!!!!!
 
             # 분석 결과에 따라 pass 또는 fail 명령 전송
-            if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+            """ if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
                 serial_connect.send_command(serial_connect.motor_ser, "pass")
             else:
-                serial_connect.send_command(serial_connect.motor_ser, "fail")
+                serial_connect.send_command(serial_connect.motor_ser, "fail")"""
 
     def cv2_to_qpixmap(self, cv2_image):
         '''OpenCV 이미지를 QPixmap으로 변환'''

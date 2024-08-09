@@ -31,4 +31,3 @@ def receive_command(ser, command):
                 # 분석 결과 (예: Pass 또는 Fail)
                 analysis_result = "PASS"  # 실제 분석 로직을 여기에 추가
                 ser.write(analysis_result.encode())"""
-"""

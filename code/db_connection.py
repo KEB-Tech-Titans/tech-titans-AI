@@ -5,8 +5,8 @@ from pymysql import Error
 from db_instance import *
 from datetime import datetime
 
-db_info_file_path = '..\\secret.yaml'
-# db_info_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+# db_info_file_path = '..\\secret.yaml'
+db_info_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
 # db_info_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
 
 def connect_mysql():
@@ -40,8 +40,8 @@ def insert_analyzed_field_data(analyze_file, conn):
         with conn.cursor() as cursor:
             query='''
                 INSERT INTO analyzed_file (saved_file_name, created_at, updated_at, content_type,
-                file_size, is_passed, raw_file_name, saved_path)
-                VALUES(%s,%s,%s,%s,%s,%s,%s,%s)
+                file_size, is_passed, raw_file_name, saved_path, defect_severity)
+                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
             '''
 
             cursor.execute(query,(
@@ -52,7 +52,8 @@ def insert_analyzed_field_data(analyze_file, conn):
                 analyze_file.file_size,
                 analyze_file.is_passed,
                 analyze_file.raw_file_name,
-                analyze_file.saved_path
+                analyze_file.saved_path,
+                analyze_file.defect_severity
             ))
             conn.commit()
         

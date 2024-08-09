@@ -6,6 +6,7 @@ import sys
 import cv2
 import json
 import math
+import threading
 
 from segment_model import *
 from db_connection import *
@@ -106,6 +107,9 @@ class VideoCaptureWidget(QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         self.current_frame = None  # 현재 프레임 초기화
 
+        self.conveyor_thread = threading.Thread(target=self.conveyor_sensor_event)
+        self.conveyor_thread.daemon = True  # 메인 스레드 종료 시 이 스레드도 종료
+        self.conveyor_thread.start()
     def update_frame(self):
         # 웹캠에서 프레임 읽기 및 QLabel 업데이트
         ret, frame = self.cap.read()
@@ -117,8 +121,9 @@ class VideoCaptureWidget(QWidget):
             self.video_label.setPixmap(QPixmap.fromImage(qt_image))
             self.current_frame = frame  # 현재 프레임 저장
     
-    # def conveyor_sensor_event(self):
-    #     if serial_connect.conveyor_ser
+    def conveyor_sensor_event(self):
+        if serial_connect.receive_command(serial_connect.conveyor_ser):
+            self.capture_frame()
     # 특정 트리거를 통한 캡처 이벤트
     # 추후 컨베이어 벨트 센서 접촉시 촬영으로 변경 예정
     def keyPressEvent(self, event):
@@ -198,10 +203,10 @@ class VideoCaptureWidget(QWidget):
             # 아두이노 모터에 결과 전송!!!!!!!
 
             # 분석 결과에 따라 pass 또는 fail 명령 전송
-            """ if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+            if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
                 serial_connect.send_command(serial_connect.motor_ser, "pass")
             else:
-                serial_connect.send_command(serial_connect.motor_ser, "fail")"""
+                serial_connect.send_command(serial_connect.motor_ser, "fail")
 
     def cv2_to_qpixmap(self, cv2_image):
         '''OpenCV 이미지를 QPixmap으로 변환'''

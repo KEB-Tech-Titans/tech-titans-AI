@@ -52,10 +52,10 @@ def calc_defect_severity(segments):
         defect_rates[defect_class] = area / smartphone_area
     
     # 결함별 계수, 임시값이므로 직접 측정하여 조정 필요
-    defect_coef = {'oil': 1, 'stain': 10, 'scratch': 30}
+    defect_coef = {'oil': 5, 'stain': 10, 'scratch': 30}
     defect_severity = 0.0
     for defect_class, rate in defect_rates.items():
-        # 겲함율이 조금만 커져도 지수적으로 증가
+        # 결함율이 조금만 커져도 지수적으로 증가
         severity = (math.e ** (defect_coef[defect_class] * rate) - 1)
         # print(severity)
         defect_severity += severity

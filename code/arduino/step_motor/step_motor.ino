@@ -31,7 +31,7 @@ void loop() {
       
       // 컨베이어에서 모터로 물체가 움직이는 시간 계산해서 delay집어넣을 것
       // 일단은 1초 대기
-      delay(1000);
+      delay(1500);
       motor.step(512, FORWARD);
       delay(2000);
       motor.step(512, BACKWARD);

@@ -87,9 +87,8 @@
         Serial.println("Captured Frame");
         digitalWrite(SENSE, HIGH);
         digitalWrite(CONVEYOR, HIGH);
-        delay(1000);
         digitalWrite(CONVEYOR, LOW);
-        delay(2000); // 두번 인식 되는 경우 방지
+        delay(2000);
     }
     else
     {
@@ -104,6 +103,11 @@
     Serial.print("Move Distance : ");
     Serial.print(distance); //측정된 물체로부터 거리값(cm값)을 보여줍니다.
     Serial.println(" Cm");
+
+    // 분석이 끝나면 컴퓨터 -> 컨베이어벨트로 분석 완료 신호를 보냄
+    String str = Serial.readString();
+    str.trim();
+    
     if(distance_ < 10 && !bObject)
     {
       bBad = true;
@@ -112,17 +116,11 @@
       digitalWrite(SENSE_, HIGH);
       digitalWrite(CONVEYOR, HIGH);
 
-      // 분석이 끝나면 컴퓨터 -> 컨베이어벨트로 분석 완료 신호를 보냄
-      while(true){
-        String str = Serial.readString();
-        str.trim();
-        if(str.compareTo("end") == 0)
-        {
-          Serial.println("Analyzing Finished");
-          digitalWrite(SENSE_, LOW);
-          digitalWrite(CONVEYOR, LOW);
-          break;
-        }
+      if(str.compareTo("end") == 0)
+      {
+        Serial.println("Analyzing Finished");
+        digitalWrite(SENSE_, LOW);
+        digitalWrite(CONVEYOR, LOW);
       }
     }
     else

@@ -7,6 +7,7 @@ import cv2
 import json
 import math
 import threading
+import time
 
 from segment_model import *
 from db_connection import *
@@ -110,6 +111,7 @@ class VideoCaptureWidget(QWidget):
         self.conveyor_thread = threading.Thread(target=self.conveyor_sensor_event)
         self.conveyor_thread.daemon = True  # 메인 스레드 종료 시 이 스레드도 종료
         self.conveyor_thread.start()
+
     def update_frame(self):
         # 웹캠에서 프레임 읽기 및 QLabel 업데이트
         ret, frame = self.cap.read()
@@ -122,8 +124,12 @@ class VideoCaptureWidget(QWidget):
             self.current_frame = frame  # 현재 프레임 저장
     
     def conveyor_sensor_event(self):
-        if serial_connect.receive_command(serial_connect.conveyor_ser):
-            self.capture_frame()
+        while True:  # 이 루프는 데이터를 계속해서 수신하려는 경우 사용
+            received_data = serial_connect.receive_command(serial_connect.conveyor_ser, "Captured Frame")
+            if received_data == "Captured Frame":
+                self.capture_frame()
+            # 추가 조건이 필요하면 여기에서 추가적으로 처리 가능
+            time.sleep(1)  # 너무 빈번한 수신을 방지하기 위해 잠시 대기 (필요에 따라 조정 가능)
     # 특정 트리거를 통한 캡처 이벤트
     # 추후 컨베이어 벨트 센서 접촉시 촬영으로 변경 예정
     def keyPressEvent(self, event):
@@ -148,10 +154,22 @@ class VideoCaptureWidget(QWidget):
             is_passed = False
             print(results)
             if 'msg' in results and results['msg'] == {'msg': 'No mask in image'}:
+                print('No mask in image')
+                while True: 
+                    if serial_connect.receive_command(serial_connect.conveyor_ser, "Waiting process...") == "Waiting process...":
+                        break
+                serial_connect.send_command(serial_connect.conveyor_ser, "end")
+                serial_connect.send_command(serial_connect.motor_ser, "fail")
                 return 
                 # fail 처리하고 return 해주세요
             if 'smartphone' not in results:
-                return
+                print('No smartPhone in image')
+                while True: 
+                    if serial_connect.receive_command(serial_connect.conveyor_ser, "Waiting process...") == "Waiting process...":
+                        break
+                serial_connect.send_command(serial_connect.conveyor_ser, "end")
+                serial_connect.send_command(serial_connect.motor_ser, "fail")
+                return 
                 # fail 처리하고 return 해주세요
 
             # 분석결과!!
@@ -217,8 +235,10 @@ class VideoCaptureWidget(QWidget):
 
             # 분석 결과에 따라 pass 또는 fail 명령 전송
             if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+                serial_connect.send_command(serial_connect.conveyor_ser, "end")
                 serial_connect.send_command(serial_connect.motor_ser, "pass")
             else:
+                serial_connect.send_command(serial_connect.conveyor_ser, "end")
                 serial_connect.send_command(serial_connect.motor_ser, "fail")
 
     def cv2_to_qpixmap(self, cv2_image):

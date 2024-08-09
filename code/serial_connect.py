@@ -18,14 +18,15 @@ time.sleep(2)  # 연결 안정화를 위해 잠시 대기
 conveyor_ser = serial.Serial(conveyor_port, conveyor_baud_rate, timeout=10)
 time.sleep(2)
 
+
 def send_command(ser, command):
     ser.write(f"{command}\n".encode())         
-    print(f"Sent to Arduino: {command}")
+    print(f"{command}")
 
-def receive_command(ser):
+def receive_command(ser, expected_data):
     while True:
         if ser.in_waiting > 0:
-            data = ser.readline().decode().strip()
-            print(data)
-            if data == "Captured Frame":
-                return True
+            received_data = ser.readline().decode().strip()
+            print(f"{received_data}")
+            if received_data == expected_data:
+                return received_data

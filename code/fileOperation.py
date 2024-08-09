@@ -8,8 +8,8 @@ from pathlib import Path
 import db_connection, db_instance
 
 #yml_file_path = '..\\secret.yaml'
-# yml_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
-yml_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
+yml_file_path = 'C:\\0.git\\tech-titans-AI\\secret.yaml'
+#yml_file_path = 'tech_titan\\tech-titans-AI\\secret.yaml'
 
 
 def s3_connection():

@@ -11,8 +11,8 @@ from ultralytics import YOLO
 
 if os.name == 'nt':
     # model_segment = YOLO('..\\ai_model\\segment_model_20240725.pt')
-    # model_segment = YOLO('C:\\0.git\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
-    model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
+    model_segment = YOLO('C:\\0.git\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
+    # model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
 else:
     model_segment = YOLO('../ai_model/segment_model_20240725.pt')
 # 이미지 리사이징을 위함

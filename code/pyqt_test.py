@@ -146,9 +146,16 @@ class VideoCaptureWidget(QWidget):
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
             is_passed = False
+            print(results)
+            if 'msg' in results and results['msg'] == {'msg': 'No mask in image'}:
+                return 
+                # fail 처리하고 return 해주세요
+            if 'smartphone' not in results:
+                return
+                # fail 처리하고 return 해주세요
 
             # 분석결과!!
-            if (results):
+            if (results): 
                 is_passed = False
             else:
                 result = results[len(results) - 1]

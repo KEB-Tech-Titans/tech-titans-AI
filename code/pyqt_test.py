@@ -162,15 +162,14 @@ class VideoCaptureWidget(QWidget):
             analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
-            # 태윤님 여기에 defect_severity를 변수 선언하고 계산해주세요
-
+       
             defect_severity = calc_defect_severity(results)
             print(defect_severity)
 
             fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, is_passed, raw_file_name, defect_severity)
 
             # inspection DB에 들어가는 정보를 저장
-            all_defect = ['oil', 'stain', 'scratch']
+            all_defect = ['oil', 'scratch', 'stain']
             inspections = []    # 이거 DB에 파싱해서 넣으시면 됩니다
             for result in results:
                 try:
@@ -180,14 +179,21 @@ class VideoCaptureWidget(QWidget):
                     break
             print(f'inspections : {inspections}')
 
+            defect_type_mapping = {
+                'oil': 0,
+                'scratch': 1,
+                'stain': 2
+            }
+
             for inspection in inspections:
                 print(inspection)
+                defect_type_value = defect_type_mapping.get(inspection['class'], -1)  # 만약 매핑되지 않는 값이 들어올 경우 -1로 설정
                 new_inspection = db_instance.Inspection(
                     created_at = analyzed_date_time,
                     updated_at = analyzed_date_time,
                     analyzed_file_name = analyzed_file_name,
                     area = inspection['area'],
-                    defect_type=inspection['class'],
+                    defect_type = defect_type_value,
                 )
                 db_connection.insert_inspection_data(new_inspection, db_connection.connect_mysql())
                 print("inspection 테이블에 저장완료")

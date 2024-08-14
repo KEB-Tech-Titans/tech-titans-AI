@@ -12,7 +12,7 @@ from ultralytics import YOLO
 if os.name == 'nt':
     # model_segment = YOLO('..\\ai_model\\segment_model_20240725.pt')
     # model_segment = YOLO('C:\\0.git\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
-    model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\segment_model_20240725.pt')
+    model_segment = YOLO('tech_titan\\tech-titans-AI\\ai_model\\ephocs_1000.pt')
 else:
     model_segment = YOLO('../ai_model/segment_model_20240725.pt')
 # 이미지 리사이징을 위함
@@ -27,11 +27,11 @@ def predict_image_segment_file(image):
     predict_image = image
 
     # 이미지 사이즈 조정 및 예측
-    resized_pred_img = image_resize(img_size, predict_image)
-    results = model_segment(resized_pred_img, task='segment')
+    # resized_pred_img = image_resize(img_size, predict_image)
+    results = model_segment(predict_image, task='segment')
 
     # 세그먼테이션 영역 생성 및 결과 처리
-    created_img, pred_result = create_segement_area(results, resized_pred_img)
+    created_img, pred_result = create_segement_area(results, predict_image)
 
     # 이미지 시각화 (디버그 코드, 추후 삭제)
     # plt.figure(figsize=(10, 10))
@@ -75,6 +75,8 @@ def create_segement_area(results, img):
 
             # 마스크의 픽셀 개수를 세서 넓이 계산
             area = np.sum(mask_binary)
+            if confs[i] < 0.5:
+                continue
 
             # spring server로 보낼 내용 정리
             result_dict = {}

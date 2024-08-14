@@ -1,10 +1,9 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, QTimer, QUrl
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap, QFont, QFontDatabase
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 import sys
 import cv2
-import json
 import math
 import threading
 import time
@@ -32,6 +31,15 @@ def calc_defect_severity(segments):
     for segment in segments:
         # smaprtphone은 결함이 아니니 예외처리
         if 'class' not in segment or segment['class'] == 'smartphone':
+            continue
+
+        if 'class' not in segment or segment['class'] == 'speaker':
+            continue
+
+        if 'class' not in segment or segment['class'] == 'button':
+            continue
+
+        if 'class' not in segment or segment['class'] == 'camera':
             continue
 
         # defect_area에 클래스가 없는 경우 .0으로 초기화
@@ -82,7 +90,8 @@ class VideoCaptureWidget(QWidget):
 
         # 웹캠 초기화
         # 다른 웹캠 연결시 VideoCapture번호 바꾸기
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
+
 
         # 타이머 설정 (30ms 간격으로 업데이트)
         self.timer = QTimer(self)
@@ -92,7 +101,7 @@ class VideoCaptureWidget(QWidget):
         # 비디오 프레임을 표시할 QLabel
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignCenter)
-        self.video_label.setFixedSize(int(screen_width * 0.3), int(screen_height * 0.3))  # 해상도에 따라 크기 조정
+        self.video_label.setFixedSize(int(screen_width * 0.6), int(screen_height * 0.6))  # 해상도에 따라 크기 조정
 
         # 레이아웃 설정
         layout = QVBoxLayout()
@@ -112,6 +121,9 @@ class VideoCaptureWidget(QWidget):
         self.conveyor_thread.daemon = True  # 메인 스레드 종료 시 이 스레드도 종료
         self.conveyor_thread.start()
 
+        self.passed_signal = pyqtSignal(bool, name='passed_signal')
+
+        self.is_passed = None
     def update_frame(self):
         # 웹캠에서 프레임 읽기 및 QLabel 업데이트
         ret, frame = self.cap.read()
@@ -130,11 +142,12 @@ class VideoCaptureWidget(QWidget):
                 self.capture_frame()
             # 추가 조건이 필요하면 여기에서 추가적으로 처리 가능
             time.sleep(1)  # 너무 빈번한 수신을 방지하기 위해 잠시 대기 (필요에 따라 조정 가능)
+
     # 특정 트리거를 통한 캡처 이벤트
     # 추후 컨베이어 벨트 센서 접촉시 촬영으로 변경 예정
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_C:
-            self.capture_frame()
+    # def keyPressEvent(self, event):
+    #     if event.key() == Qt.Key_C:
+    #         self.capture_frame()
 
     # 이미지 촬영
     def capture_frame(self):
@@ -151,7 +164,6 @@ class VideoCaptureWidget(QWidget):
             
             # OpenCV 이미지를 분석
             img, results = predict_image_segment_file(rgb_frame)
-            is_passed = False
             print(results)
             if 'msg' in results and results['msg'] == {'msg': 'No mask in image'}:
                 print('No mask in image')
@@ -160,38 +172,30 @@ class VideoCaptureWidget(QWidget):
                         break
                 serial_connect.send_command(serial_connect.conveyor_ser, "end")
                 serial_connect.send_command(serial_connect.motor_ser, "fail")
-                return 
+                return
                 # fail 처리하고 return 해주세요
-            if 'smartphone' not in results:
-                print('No smartPhone in image')
-                while True: 
-                    if serial_connect.receive_command(serial_connect.conveyor_ser, "Waiting process...") == "Waiting process...":
-                        break
-                serial_connect.send_command(serial_connect.conveyor_ser, "end")
-                serial_connect.send_command(serial_connect.motor_ser, "fail")
-                return 
-                # fail 처리하고 return 해주세요
-
             # 분석결과!!
             if (results): 
-                is_passed = False
+                self.is_passed = False
             else:
                 result = results[len(results) - 1]
                 # 분석결과 양품 불량품 판정
                 if result['condition'] == 'pass':
-                    is_passed = True
+                    self.is_passed = True
                 else:
-                    is_passed = False
+                    self.is_passed = False
+
+            self.passed_signal.emit(self.is_passed)
 
             # 분석된 결과 db 및 s3 내부에 저장
             analyzed_file_name, analyzed_date_time = fileOperation.make_raw_file_name(False)
             cv2.imwrite(analyzed_file_name, img)
             fileOperation.upload_to_s3(analyzed_file_name, analyzed_date_time)
-       
+        
             defect_severity = calc_defect_severity(results)
             print(defect_severity)
 
-            fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, is_passed, raw_file_name, defect_severity)
+            fileOperation.save_file_info_to_analyzed_file_table(analyzed_file_name, analyzed_date_time, self.is_passed, raw_file_name, defect_severity)
 
             # inspection DB에 들어가는 정보를 저장
             all_defect = ['oil', 'scratch', 'stain']
@@ -234,10 +238,18 @@ class VideoCaptureWidget(QWidget):
             # 아두이노 모터에 결과 전송!!!!!!!
 
             # 분석 결과에 따라 pass 또는 fail 명령 전송
-            if is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+            if self.is_passed:  # 실제로 pass 조건을 결정하는 로직으로 수정 필요
+                print("product is safe!!")
+                while True: 
+                    if serial_connect.receive_command(serial_connect.conveyor_ser, "Waiting process...") == "Waiting process...":
+                        break
                 serial_connect.send_command(serial_connect.conveyor_ser, "end")
                 serial_connect.send_command(serial_connect.motor_ser, "pass")
             else:
+                print('product is unsafe!!')
+                while True: 
+                    if serial_connect.receive_command(serial_connect.conveyor_ser, "Waiting process...") == "Waiting process...":
+                        break
                 serial_connect.send_command(serial_connect.conveyor_ser, "end")
                 serial_connect.send_command(serial_connect.motor_ser, "fail")
 
@@ -255,7 +267,8 @@ class VideoCaptureWidget(QWidget):
         # 타이머 정지 및 웹캠 해제
         self.timer.stop()
         self.cap.release()
-        serial_connect.serial.close()  # 시리얼 포트 닫기
+        serial_connect.conveyor_ser.close()  # 시리얼 포트 닫기
+        serial_connect.motor_ser.close()
 
 # 메인 화면 구성
 class MainPage(QWidget):
@@ -281,14 +294,18 @@ class MainPage(QWidget):
         middle_layout.addWidget(self.photo_label)
 
         # 실시간 탐지 결과 표시 공간
-        self.detect_label = QLabel('합 / 불 양품 검출', self)
-        self.detect_label.setStyleSheet("background-color: white; font-size: 20px; font-weight: bold; text-align: center; border: 1px solid black;")
+        self.detect_label = QLabel(self)
+        self.detect_label.setStyleSheet("background-color: lightgray; font-size: 64px; font-weight: bold; text-align: center; border: 1px solid black;")
         self.detect_label.setAlignment(Qt.AlignCenter)
         self.detect_label.setFixedSize(int(screen_width * 0.3), int(screen_height * 0.3))  # 해상도에 따라 크기 조정
         middle_layout.addWidget(self.detect_label)
 
         # 비디오 캡처 위젯 추가
         self.video_widget = VideoCaptureWidget(self.photo_label, self)
+
+        self.video_widget.passed_signal.connect(self.update_detect_label)
+
+        
 
         layout.addWidget(self.video_widget)
         layout.addLayout(middle_layout)
@@ -328,7 +345,22 @@ class MainPage(QWidget):
     def focus_video_widget(self):
         # 비디오 위젯에 포커스 설정
         self.video_widget.setFocus()
-
+    def updated_detect_label(self, is_passed):
+        if is_passed is None:
+            self.detect_label.setText('합/불 양품 판정')
+            self.detect_label.setStyleSheet(
+                "background-color: lightgray; font-size: 64px; font-weight: bold; text-align: center; border: 1px solid black; color: blue;"
+            )
+        elif is_passed:
+            self.detect_label.setText('합격')
+            self.detect_label.setStyleSheet(
+                "background-color: lightgray; font-size: 64px; font-weight: bold; text-align: center; border: 1px solid black; color: blue;"
+            )
+        else:
+            self.detect_label.setText('불합격')
+            self.detect_label.setStyleSheet(
+                "background-color: lightgray; font-size: 64px; font-weight: bold; text-align: center; border: 1px solid black; color: red;"
+            )
 # 통계 화면 구성
 class StatusPage(QWidget):
     
@@ -389,7 +421,7 @@ class StatusPage(QWidget):
     def create_stat_label(self, layout, label_text, value_text, row, col, rowspan=1, colspan=1):
         # 통계 레이블과 값을 생성하여 레이아웃에 추가
         label = QLabel(label_text, self)
-        label.setStyleSheet("font-size: 68px; color: black; font-weight: bold; padding-top : 15px")
+        label.setStyleSheet("font-size: 64px; color: black; font-weight: bold; padding-top : 15px")
         label.setFixedHeight(70)
         label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(label, row, col, 1, colspan)

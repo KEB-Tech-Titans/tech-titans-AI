@@ -84,9 +84,12 @@
         bObject = true;
 
         Serial.println("Product Sensing...");
-        Serial.println("Captured Frame");
+
         digitalWrite(SENSE, HIGH);
         digitalWrite(CONVEYOR, HIGH);
+        delay(1000);
+
+        Serial.println("Captured Frame");
         digitalWrite(CONVEYOR, LOW);
         delay(2000);
     }
